@@ -54,7 +54,7 @@ docker run -v $(pwd):/workspace alpine sh -c "ping google.com"`,
 	}, {
 		"escape",
 		[]Step{{
-			Image: "nginx:12",
+			Image:   "nginx:12",
 			Command: "ls \"me\"",
 		}},
 		`docker run -v $(pwd):/workspace nginx:12 sh -c "ls \"me\""`,

@@ -1,0 +1,8 @@
+iversion: 1
+steps:
+- image: alpine
+  command: |
+    ping -c 4 google.com
+    ping "facebook.com"
+    ping 'subiz.com'
+   
