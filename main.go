@@ -18,21 +18,9 @@ type Step struct {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "configmap"
-	app.Usage = "configmap"
-	app.Version = "1.0.12"
-
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "config",
-			Usage: "take input as config file",
-		},
-		cli.StringFlag{
-			Name:  "format",
-			Value: "docker",
-			Usage: "output format, can be bash, docker",
-		},
-	}
+	app.Name = "dockerun"
+	app.Usage = "dockerun"
+	app.Version = "1.0.0"
 	app.Action = run
 	l := log.New(os.Stderr, "", 0)
 	if err := app.Run(os.Args); err != nil {
@@ -90,7 +78,10 @@ func stepToCommand(step Step) string {
 	if step.Dir == "" {
 		step.Dir = "/workspace"
 	}
-	return fmt.Sprintf(`docker run -v $(pwd):%s %s sh -c %q`, step.Dir, step.Image, step.Command)
+	cmd := strings.Replace(step.Command, `\`, `\\`, -1)
+	cmd = strings.Replace(cmd, `"`, `\"`, -1)
+
+	return fmt.Sprintf(`docker run -v $(pwd):%s %s sh -c "%s"`, step.Dir, step.Image, cmd)
 }
 
 func stepsToCommand(steps []Step) string {
@@ -100,7 +91,6 @@ func stepsToCommand(steps []Step) string {
 	}
 	return strings.Join(cmds, "\n")
 }
-
 
 func run(c *cli.Context) error {
 	if c.NArg() != 1 {

@@ -52,12 +52,21 @@ func TestStepsToCommand(t *testing.T) {
 		`docker run -v $(pwd):/home/van nginx:12 sh -c "ls"
 docker run -v $(pwd):/workspace alpine sh -c "ping google.com"`,
 	}, {
-		"escape",
+		"escape quote",
 		[]Step{{
 			Image:   "nginx:12",
-			Command: "ls \"me\"",
+			Command: `ls "me"`,
 		}},
 		`docker run -v $(pwd):/workspace nginx:12 sh -c "ls \"me\""`,
+	}, {
+		"escape newline",
+		[]Step{{
+			Image:   "nginx:12",
+			Command: `ping google.com
+echo "\n1\\n2"`,
+		}},
+		`docker run -v $(pwd):/workspace nginx:12 sh -c "ping google.com
+echo \"\\n1\\\\n2\""`,
 	}}
 
 	for _, tc := range tcs {
