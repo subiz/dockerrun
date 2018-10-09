@@ -30,6 +30,44 @@ func compareError(a, b error) bool {
 	return a.Error() == b.Error()
 }
 
+func TestStepsToCommand(t *testing.T) {
+	tcs := []struct {
+		desc   string
+		steps  []Step
+		expect string
+	}{{
+		"nil",
+		nil,
+		"",
+	}, {
+		"normal",
+		[]Step{{
+			Image:   "nginx:12",
+			Command: "ls",
+			Dir:     "/home/van",
+		}, {
+			Image:   "alpine",
+			Command: "ping google.com",
+		}},
+		`docker run -v $(pwd):/home/van nginx:12 sh -c "ls"
+docker run -v $(pwd):/workspace alpine sh -c "ping google.com"`,
+	}, {
+		"escape",
+		[]Step{{
+			Image: "nginx:12",
+			Command: "ls \"me\"",
+		}},
+		`docker run -v $(pwd):/workspace nginx:12 sh -c "ls \"me\""`,
+	}}
+
+	for _, tc := range tcs {
+		out := stepsToCommand(tc.steps)
+		if out != tc.expect {
+			t.Errorf("[%s] expect %s, got %s", tc.desc, tc.expect, out)
+		}
+	}
+}
+
 func TestLoadConfig(t *testing.T) {
 	tcs := []struct {
 		filename string
@@ -47,7 +85,7 @@ func TestLoadConfig(t *testing.T) {
 			Dir:     "/workspace",
 		}, {
 			Image:   "alpine:3.8",
-			Command: "ping google.com",
+			Command: "ping google.com\nping subiz.com",
 		}},
 		nil,
 	}}
