@@ -49,15 +49,15 @@ func TestStepsToCommand(t *testing.T) {
 			Image:   "alpine",
 			Command: "ping google.com",
 		}},
-		`docker run -v $(pwd):/home/van nginx:12 sh -c "ls"
-docker run -v $(pwd):/workspace alpine sh -c "ping google.com"`,
+		`docker run -v $(pwd):/home/van --entrypoint /bin/sh nginx:12 -c "ls"
+docker run -v $(pwd):/workspace --entrypoint /bin/sh alpine -c "ping google.com"`,
 	}, {
 		"escape quote",
 		[]Step{{
 			Image:   "nginx:12",
 			Command: `ls "me"`,
 		}},
-		`docker run -v $(pwd):/workspace nginx:12 sh -c "ls \"me\""`,
+		`docker run -v $(pwd):/workspace --entrypoint /bin/sh nginx:12 -c "ls \"me\""`,
 	}, {
 		"escape newline",
 		[]Step{{
@@ -65,7 +65,7 @@ docker run -v $(pwd):/workspace alpine sh -c "ping google.com"`,
 			Command: `ping google.com
 echo "\n1\\n2"`,
 		}},
-		`docker run -v $(pwd):/workspace nginx:12 sh -c "ping google.com
+		`docker run -v $(pwd):/workspace --entrypoint /bin/sh nginx:12 -c "ping google.com
 echo \"\\n1\\\\n2\""`,
 	}}
 
@@ -95,6 +95,14 @@ func TestLoadConfig(t *testing.T) {
 		}, {
 			Image:   "alpine:3.8",
 			Command: "ping google.com\nping subiz.com",
+		}},
+		nil,
+	}, {
+		"./test/run3.yaml",
+		[]Step{{
+			Image:   "alpine",
+			Command: "ping -c 4 google.com",
+			Shell: "/bin/bash",
 		}},
 		nil,
 	}}

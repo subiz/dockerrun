@@ -14,13 +14,14 @@ type Step struct {
 	Image   string
 	Command string
 	Dir     string
+	Shell   string
 }
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "dockerun"
 	app.Usage = "dockerun"
-	app.Version = "1.0.0"
+	app.Version = "1.0.1"
 	app.Action = run
 	l := log.New(os.Stderr, "", 0)
 	if err := app.Run(os.Args); err != nil {
@@ -65,11 +66,12 @@ func parseConfigMap(obj map[interface{}]interface{}) []Step {
 		img, _ := stepi["image"].(string)
 		cmd, _ := stepi["command"].(string)
 		dir, _ := stepi["dir"].(string)
-		img, cmd, dir = trim(img), trim(cmd), trim(dir)
+		shell, _ := stepi["shell"].(string)
+		img, cmd, dir, shell = trim(img), trim(cmd), trim(dir), trim(shell)
 		if img == "" {
 			continue
 		}
-		steps = append(steps, Step{Image: img, Command: cmd, Dir: dir})
+		steps = append(steps, Step{Image: img, Command: cmd, Dir: dir, Shell: shell})
 	}
 	return steps
 }
@@ -78,10 +80,14 @@ func stepToCommand(step Step) string {
 	if step.Dir == "" {
 		step.Dir = "/workspace"
 	}
+
+	if step.Shell == "" {
+		step.Shell = "/bin/sh"
+	}
 	cmd := strings.Replace(step.Command, `\`, `\\`, -1)
 	cmd = strings.Replace(cmd, `"`, `\"`, -1)
 
-	return fmt.Sprintf(`docker run -v $(pwd):%s %s sh -c "%s"`, step.Dir, step.Image, cmd)
+	return fmt.Sprintf(`docker run -v $(pwd):%s --entrypoint %s %s -c "%s"`, step.Dir, step.Shell, step.Image, cmd)
 }
 
 func stepsToCommand(steps []Step) string {
