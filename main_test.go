@@ -129,9 +129,13 @@ func TestLoadConfig(t *testing.T) {
 		}},
 		nil,
 	}, {
-		"./test/run8.yaml",
+		"./test/run8.yaml", // invalid env
 		nil,
 		fmt.Errorf("invalid env at step 1"),
+	}, {
+		"./test/run9.yaml", //missing version
+		nil,
+		fmt.Errorf("should be version 1, got version: '2'"),
 	}}
 
 	for _, tc := range tcs {

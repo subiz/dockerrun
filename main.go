@@ -51,7 +51,6 @@ func loadConfig(name string) ([]Step, error) {
 		}
 		return nil, err
 	}
-
 	return parseConfigMap(obj)
 }
 
@@ -67,7 +66,21 @@ func getEnv(envis []interface{}) ([]string, error) {
 	return env, nil
 }
 
+func checkVersion(obj map[interface{}]interface{}) error {
+	ver, _ := obj["version"].(interface{})
+	version := toString(ver)
+
+	if strings.TrimSpace(version) != "1" {
+		return fmt.Errorf("should be version 1, got version: '%s'", version)
+	}
+	return nil
+}
+
 func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
+	if err := checkVersion(obj); err != nil {
+		return nil, err
+	}
+
 	genvis, _ := obj["env"].([]interface{})
 	genv, err := getEnv(genvis)
 	if err != nil {
@@ -90,7 +103,7 @@ func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
 		envis, _ := stepi["env"].([]interface{})
 		env, err := getEnv(envis)
 		if err != nil {
-			return nil, fmt.Errorf("%v at step %d", err , i+1)
+			return nil, fmt.Errorf("%v at step %d", err, i+1)
 		}
 
 		volis, _ := stepi["volumes"].([]interface{})
