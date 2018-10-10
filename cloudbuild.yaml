@@ -1,0 +1,25 @@
+substitutions:
+  _VERSION: "1.1.3"
+  _NAME: dockerun
+
+steps:
+- name: gcr.io/cloud-builders/go
+  entrypoint: sh
+  args:
+  - -c
+  - |
+    mkdir -p /workspace/gopath/src/git.subiz.net
+    ln -s /workspace /workspace/gopath/src/git.subiz.net/$_NAME
+    cd /workspace/gopath/src/git.subiz.net/$_NAME
+    go get -d -v ./...
+    CGO_ENABLED=0 go build -ldflags="-s -w"
+
+- name: gcr.io/cloud-builders/docker
+  entrypoint: sh
+  args:
+  - -c
+  - |
+    docker login -u $_DOCKER_USERNAME -p $_DOCKER_PASSWORD &
+    docker build -t subiz/$_NAME:$_VERSION . &
+    wait
+    docker push subiz/$_NAME:$_VERSION
