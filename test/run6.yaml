@@ -1,0 +1,6 @@
+version: 1
+steps:
+- image: alpine
+  env:
+  - "A=4"
+  - "B=$B"

@@ -18,6 +18,7 @@ func compareStep(a, b Step) bool {
 		a.Dir == b.Dir &&
 		a.Command == b.Command &&
 		a.Shell == b.Shell &&
+		compareArr(a.Env, b.Env) &&
 		compareArr(a.Volumes, b.Volumes)
 }
 

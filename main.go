@@ -16,13 +16,14 @@ type Step struct {
 	Dir     string
 	Shell   string
 	Volumes []string
+	Env     []string
 }
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "dockerun"
 	app.Usage = "dockerun"
-	app.Version = "1.1.1"
+	app.Version = "1.1.2"
 	app.Action = run
 	l := log.New(os.Stderr, "", 0)
 	if err := app.Run(os.Args); err != nil {
@@ -68,6 +69,16 @@ func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
 		cmd, _ := stepi["command"].(string)
 		dir, _ := stepi["dir"].(string)
 		shell, _ := stepi["shell"].(string)
+		envis, _ := stepi["env"].([]interface{})
+		env := make([]string, 0)
+		for _, ei := range envis {
+			e, ok := ei.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid volume at step %d", i+1)
+			}
+			env = append(env, strings.TrimSpace(e))
+		}
+
 		volis, _ := stepi["volumes"].([]interface{})
 		vols := make([]string, 0)
 		for _, vi := range volis {
@@ -90,6 +101,7 @@ func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
 			Dir:     dir,
 			Shell:   shell,
 			Volumes: vols,
+			Env:     env,
 		})
 	}
 	return steps, nil
@@ -99,6 +111,11 @@ func stepToCommand(step Step) string {
 	dir := strings.TrimSpace(step.Dir)
 	if len(dir) != 0 {
 		dir = " -w " + dir
+	}
+
+	env := strings.Join(step.Env, " -e ")
+	if len(env) > 0 {
+		env = " -e " + env
 	}
 
 	if step.Shell == "" {
@@ -111,7 +128,7 @@ func stepToCommand(step Step) string {
 	if len(vol) > 0 {
 		vol = " -v " + vol
 	}
-	return fmt.Sprintf(`docker run --entrypoint %s%s%s %s -c "%s"`, step.Shell, dir, vol, step.Image, cmd)
+	return fmt.Sprintf(`docker run --entrypoint %s%s%s%s --rm %s -c "%s"`, step.Shell, env, dir, vol, step.Image, cmd)
 }
 
 func stepsToCommand(steps []Step) string {
