@@ -45,7 +45,7 @@ docker run --entrypoint /bin/sh --rm alpine -c "ping google.com"`,
 	}, {
 		"escape newline",
 		[]Step{{
-			Image:   "nginx:12",
+			Image: "nginx:12",
 			Command: `ping google.com
 echo "\n1\\n2"`,
 		}},
@@ -54,7 +54,7 @@ echo \"\\n1\\\\n2\""`,
 	}, {
 		"volumes",
 		[]Step{{
-			Image: "alpine",
+			Image:   "alpine",
 			Volumes: []string{"/a:/a"},
 		}},
 		`docker run --entrypoint /bin/sh -v /a:/a --rm alpine -c ""`,
@@ -62,7 +62,7 @@ echo \"\\n1\\\\n2\""`,
 		"env",
 		[]Step{{
 			Image: "alpine",
-			Env: []string{"a=a", "b=$b"},
+			Env:   []string{"a=a", "b=$b"},
 		}},
 		`docker run --entrypoint /bin/sh -e a=a -e b=$b --rm alpine -c ""`,
 	}}
@@ -100,17 +100,17 @@ func TestLoadConfig(t *testing.T) {
 		[]Step{{
 			Image:   "alpine",
 			Command: "ping -c 4 google.com",
-			Shell: "/bin/bash",
+			Shell:   "/bin/bash",
 		}},
 		nil,
 	}, {
 		"./test/run4.yaml",
 		[]Step{{
-			Image: "alpine",
+			Image:   "alpine",
 			Volumes: []string{"$(pwd):/workspace"},
 		}},
 		nil,
-	},{
+	}, {
 		"./test/run5.yaml",
 		nil,
 		fmt.Errorf("invalid volume at step 1"),
@@ -118,7 +118,14 @@ func TestLoadConfig(t *testing.T) {
 		"./test/run6.yaml",
 		[]Step{{
 			Image: "alpine",
-			Env: []string{"A=4", "B=$B"},
+			Env:   []string{"A=4", "B=$B"},
+		}},
+		nil,
+	}, {
+		"./test/run7.yaml",
+		[]Step{{
+			Image: "alpine",
+			Env:   []string{"C=5", "A=4", "C=6"},
 		}},
 		nil,
 	}}

@@ -23,7 +23,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "dockerun"
 	app.Usage = "dockerun"
-	app.Version = "1.1.2"
+	app.Version = "1.1.3"
 	app.Action = run
 	l := log.New(os.Stderr, "", 0)
 	if err := app.Run(os.Args); err != nil {
@@ -56,6 +56,16 @@ func loadConfig(name string) ([]Step, error) {
 }
 
 func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
+	genvis, _ := obj["env"].([]interface{})
+	genv := make([]string, 0)
+	for _, gei := range genvis {
+		e, ok := gei.(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid global env")
+		}
+		genv = append(genv, strings.TrimSpace(e))
+	}
+
 	stepsints, _ := obj["steps"].([]interface{})
 	steps := make([]Step, 0)
 	for i, stepint := range stepsints {
@@ -101,7 +111,7 @@ func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
 			Dir:     dir,
 			Shell:   shell,
 			Volumes: vols,
-			Env:     env,
+			Env:     append(genv, env...),
 		})
 	}
 	return steps, nil
