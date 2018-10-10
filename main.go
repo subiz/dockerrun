@@ -15,13 +15,14 @@ type Step struct {
 	Command string
 	Dir     string
 	Shell   string
+	Volumes []string
 }
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "dockerun"
 	app.Usage = "dockerun"
-	app.Version = "1.0.1"
+	app.Version = "1.1.1"
 	app.Action = run
 	l := log.New(os.Stderr, "", 0)
 	if err := app.Run(os.Args); err != nil {
@@ -50,13 +51,13 @@ func loadConfig(name string) ([]Step, error) {
 		return nil, err
 	}
 
-	return parseConfigMap(obj), nil
+	return parseConfigMap(obj)
 }
 
-func parseConfigMap(obj map[interface{}]interface{}) []Step {
+func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
 	stepsints, _ := obj["steps"].([]interface{})
 	steps := make([]Step, 0)
-	for _, stepint := range stepsints {
+	for i, stepint := range stepsints {
 		stepi, ok := stepint.(map[interface{}]interface{})
 		if !ok {
 			continue
@@ -67,18 +68,37 @@ func parseConfigMap(obj map[interface{}]interface{}) []Step {
 		cmd, _ := stepi["command"].(string)
 		dir, _ := stepi["dir"].(string)
 		shell, _ := stepi["shell"].(string)
+		volis, _ := stepi["volumes"].([]interface{})
+		vols := make([]string, 0)
+		for _, vi := range volis {
+			v, ok := vi.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid volume at step %d", i+1)
+			}
+			if len(strings.Split(v, ":")) != 2 {
+				return nil, fmt.Errorf("invalid volume at step %d", i+1)
+			}
+			vols = append(vols, strings.TrimSpace(v))
+		}
 		img, cmd, dir, shell = trim(img), trim(cmd), trim(dir), trim(shell)
 		if img == "" {
 			continue
 		}
-		steps = append(steps, Step{Image: img, Command: cmd, Dir: dir, Shell: shell})
+		steps = append(steps, Step{
+			Image:   img,
+			Command: cmd,
+			Dir:     dir,
+			Shell:   shell,
+			Volumes: vols,
+		})
 	}
-	return steps
+	return steps, nil
 }
 
 func stepToCommand(step Step) string {
-	if step.Dir == "" {
-		step.Dir = "/workspace"
+	dir := strings.TrimSpace(step.Dir)
+	if len(dir) != 0 {
+		dir = " -w " + dir
 	}
 
 	if step.Shell == "" {
@@ -87,7 +107,11 @@ func stepToCommand(step Step) string {
 	cmd := strings.Replace(step.Command, `\`, `\\`, -1)
 	cmd = strings.Replace(cmd, `"`, `\"`, -1)
 
-	return fmt.Sprintf(`docker run -v $(pwd):%s --entrypoint %s %s -c "%s"`, step.Dir, step.Shell, step.Image, cmd)
+	vol := strings.Join(step.Volumes, " -v ")
+	if len(vol) > 0 {
+		vol = " -v " + vol
+	}
+	return fmt.Sprintf(`docker run --entrypoint %s%s%s %s -c "%s"`, step.Shell, dir, vol, step.Image, cmd)
 }
 
 func stepsToCommand(steps []Step) string {

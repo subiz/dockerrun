@@ -14,22 +14,6 @@ func jsonify(a interface{}) string {
 	return string(b)
 }
 
-func compareStep(a, b []Step) bool {
-	return jsonify(a) == jsonify(b)
-}
-
-func compareError(a, b error) bool {
-	if a == nil {
-		return b == nil
-	}
-
-	if b == nil {
-		return false
-	}
-
-	return a.Error() == b.Error()
-}
-
 func TestStepsToCommand(t *testing.T) {
 	tcs := []struct {
 		desc   string
@@ -49,15 +33,15 @@ func TestStepsToCommand(t *testing.T) {
 			Image:   "alpine",
 			Command: "ping google.com",
 		}},
-		`docker run -v $(pwd):/home/van --entrypoint /bin/sh nginx:12 -c "ls"
-docker run -v $(pwd):/workspace --entrypoint /bin/sh alpine -c "ping google.com"`,
+		`docker run --entrypoint /bin/sh -w /home/van nginx:12 -c "ls"
+docker run --entrypoint /bin/sh alpine -c "ping google.com"`,
 	}, {
 		"escape quote",
 		[]Step{{
 			Image:   "nginx:12",
 			Command: `ls "me"`,
 		}},
-		`docker run -v $(pwd):/workspace --entrypoint /bin/sh nginx:12 -c "ls \"me\""`,
+		`docker run --entrypoint /bin/sh nginx:12 -c "ls \"me\""`,
 	}, {
 		"escape newline",
 		[]Step{{
@@ -65,7 +49,7 @@ docker run -v $(pwd):/workspace --entrypoint /bin/sh alpine -c "ping google.com"
 			Command: `ping google.com
 echo "\n1\\n2"`,
 		}},
-		`docker run -v $(pwd):/workspace --entrypoint /bin/sh nginx:12 -c "ping google.com
+		`docker run --entrypoint /bin/sh nginx:12 -c "ping google.com
 echo \"\\n1\\\\n2\""`,
 	}}
 
@@ -105,6 +89,17 @@ func TestLoadConfig(t *testing.T) {
 			Shell: "/bin/bash",
 		}},
 		nil,
+	}, {
+		"./test/run4.yaml",
+		[]Step{{
+			Image: "alpine",
+			Volumes: []string{"$(pwd):/workspace"},
+		}},
+		nil,
+	},{
+		"./test/run5.yaml",
+		nil,
+		fmt.Errorf("invalid volume at step 1"),
 	}}
 
 	for _, tc := range tcs {
@@ -117,7 +112,7 @@ func TestLoadConfig(t *testing.T) {
 			continue
 		}
 
-		if !compareStep(steps, tc.expect) {
+		if !compareSteps(steps, tc.expect) {
 			t.Errorf("[%v] expect %s, got %s", tc.filename, jsonify(tc.expect), jsonify(steps))
 		}
 	}
