@@ -128,12 +128,16 @@ func TestLoadConfig(t *testing.T) {
 			Env:   []string{"C=5", "A=4", "C=6"},
 		}},
 		nil,
+	}, {
+		"./test/run8.yaml",
+		nil,
+		fmt.Errorf("invalid env at step 1"),
 	}}
 
 	for _, tc := range tcs {
 		steps, err := loadConfig(tc.filename)
 		if !compareError(err, tc.err) {
-			t.Errorf("[%v] expect %v, got %v", tc.filename, tc.err, err)
+			t.Errorf("[%v] expect %v, got %v.", tc.filename, tc.err, err)
 		}
 
 		if err != nil {

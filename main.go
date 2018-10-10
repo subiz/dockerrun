@@ -55,17 +55,24 @@ func loadConfig(name string) ([]Step, error) {
 	return parseConfigMap(obj)
 }
 
-func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
-	genvis, _ := obj["env"].([]interface{})
-	genv := make([]string, 0)
-	for _, gei := range genvis {
+func getEnv(envis []interface{}) ([]string, error) {
+	env := make([]string, 0)
+	for _, gei := range envis {
 		e, ok := gei.(string)
 		if !ok {
-			return nil, fmt.Errorf("invalid global env")
+			return nil, fmt.Errorf("invalid env")
 		}
-		genv = append(genv, strings.TrimSpace(e))
+		env = append(env, strings.TrimSpace(e))
 	}
+	return env, nil
+}
 
+func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
+	genvis, _ := obj["env"].([]interface{})
+	genv, err := getEnv(genvis)
+	if err != nil {
+		return nil, err
+	}
 	stepsints, _ := obj["steps"].([]interface{})
 	steps := make([]Step, 0)
 	for i, stepint := range stepsints {
@@ -79,14 +86,11 @@ func parseConfigMap(obj map[interface{}]interface{}) ([]Step, error) {
 		cmd, _ := stepi["command"].(string)
 		dir, _ := stepi["dir"].(string)
 		shell, _ := stepi["shell"].(string)
+
 		envis, _ := stepi["env"].([]interface{})
-		env := make([]string, 0)
-		for _, ei := range envis {
-			e, ok := ei.(string)
-			if !ok {
-				return nil, fmt.Errorf("invalid volume at step %d", i+1)
-			}
-			env = append(env, strings.TrimSpace(e))
+		env, err := getEnv(envis)
+		if err != nil {
+			return nil, fmt.Errorf("%v at step %d", err , i+1)
 		}
 
 		volis, _ := stepi["volumes"].([]interface{})

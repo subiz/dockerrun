@@ -1,0 +1,8 @@
+version: 1
+env:
+- "C=5"
+- "A=4"
+steps:
+- image: alpine
+  env:
+  - name: 4
