@@ -33,15 +33,15 @@ func TestStepsToCommand(t *testing.T) {
 			Image:   "alpine",
 			Command: "ping google.com",
 		}},
-		`docker run --entrypoint /bin/sh -w /home/van --rm nginx:12 -c "ls"
-docker run --entrypoint /bin/sh --rm alpine -c "ping google.com"`,
+		`docker run --privileged --entrypoint /bin/sh -w /home/van --rm nginx:12 -c "ls"
+docker run --privileged --entrypoint /bin/sh --rm alpine -c "ping google.com"`,
 	}, {
 		"escape quote",
 		[]Step{{
 			Image:   "nginx:12",
 			Command: `ls "me"`,
 		}},
-		`docker run --entrypoint /bin/sh --rm nginx:12 -c "ls \"me\""`,
+		`docker run --privileged --entrypoint /bin/sh --rm nginx:12 -c "ls \"me\""`,
 	}, {
 		"escape newline",
 		[]Step{{
@@ -49,7 +49,7 @@ docker run --entrypoint /bin/sh --rm alpine -c "ping google.com"`,
 			Command: `ping google.com
 echo "\n1\\n2"`,
 		}},
-		`docker run --entrypoint /bin/sh --rm nginx:12 -c "ping google.com
+		`docker run --privileged --entrypoint /bin/sh --rm nginx:12 -c "ping google.com
 echo \"\\n1\\\\n2\""`,
 	}, {
 		"volumes",
@@ -57,14 +57,14 @@ echo \"\\n1\\\\n2\""`,
 			Image:   "alpine",
 			Volumes: []string{"/a:/a"},
 		}},
-		`docker run --entrypoint /bin/sh -v /a:/a --rm alpine -c ""`,
+		`docker run --privileged --entrypoint /bin/sh -v /a:/a --rm alpine -c ""`,
 	}, {
 		"env",
 		[]Step{{
 			Image: "alpine",
 			Env:   []string{"a=a", "b=$b"},
 		}},
-		`docker run --entrypoint /bin/sh -e a=a -e b=$b --rm alpine -c ""`,
+		`docker run --privileged --entrypoint /bin/sh -e a=a -e b=$b --rm alpine -c ""`,
 	}}
 
 	for _, tc := range tcs {

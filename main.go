@@ -23,7 +23,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "dockerun"
 	app.Usage = "dockerun"
-	app.Version = "1.1.3"
+	app.Version = "1.1.4"
 	app.Action = run
 	l := log.New(os.Stderr, "", 0)
 	if err := app.Run(os.Args); err != nil {
@@ -155,7 +155,7 @@ func stepToCommand(step Step) string {
 	if len(vol) > 0 {
 		vol = " -v " + vol
 	}
-	return fmt.Sprintf(`docker run --entrypoint %s%s%s%s --rm %s -c "%s"`, step.Shell, env, dir, vol, step.Image, cmd)
+	return fmt.Sprintf(`docker run --privileged --entrypoint %s%s%s%s --rm %s -c "%s"`, step.Shell, env, dir, vol, step.Image, cmd)
 }
 
 func stepsToCommand(steps []Step) string {
