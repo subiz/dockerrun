@@ -149,13 +149,11 @@ func stepToCommand(step Step) string {
 		step.Shell = "/bin/sh"
 	}
 	cmd := strings.Replace(step.Command, `\`, `\\`, -1)
-	cmd = strings.Replace(cmd, `"`, `\"`, -1)
-
 	vol := strings.Join(step.Volumes, " -v ")
 	if len(vol) > 0 {
 		vol = " -v " + vol
 	}
-	return fmt.Sprintf(`docker run --privileged --entrypoint %s%s%s%s --rm %s -c "%s"`, step.Shell, env, dir, vol, step.Image, cmd)
+	return fmt.Sprintf(`docker run --privileged --entrypoint %s%s%s%s --rm %s -c '%s'`, step.Shell, env, dir, vol, step.Image, cmd)
 }
 
 func stepsToCommand(steps []Step) string {
