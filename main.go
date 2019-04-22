@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 	"io"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/urfave/cli"
+	"gopkg.in/yaml.v2"
 )
 
 type Step struct {
@@ -23,7 +24,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "dockerun"
 	app.Usage = "dockerun"
-	app.Version = "1.1.4"
+	app.Version = "1.1.5"
 	app.Action = run
 	l := log.New(os.Stderr, "", 0)
 	if err := app.Run(os.Args); err != nil {
